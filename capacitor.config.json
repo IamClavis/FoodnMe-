@@ -1,0 +1,10 @@
+{
+  "appId": "com.pinksweat.foodnme",
+  "appName": "Food-n-Me",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#FEFAE0",
+  "server": {
+    "androidScheme": "https"
+  }
+}

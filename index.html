@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Food-n-Me | My Weekly Meal Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green:#2D6A4F; --green-lt:#52B788; --cream:#FEFAE0;
+    --amber:#D4A017; --rust:#BC4749; --charcoal:#1B1B1B;
+    --muted:#6B7280; --card-bg:#FFFFFF; --radius:14px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--charcoal);min-height:100vh;}
+
+  /* HEADER */
+  header{background:var(--green);padding:14px 16px 10px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+  .logo-icon{font-size:1.8rem;line-height:1;}
+  .logo-text{flex:1;}
+  .logo-text h1{font-family:'Lora',serif;font-size:1.35rem;font-weight:500;color:#fff;}
+  .logo-text p{font-size:.65rem;color:var(--green-lt);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+  .week-label{background:var(--amber);color:#fff;font-size:.72rem;font-weight:700;border-radius:20px;padding:4px 10px;white-space:nowrap;}
+
+  /* TABS */
+  .tab-nav{display:flex;background:var(--green);border-top:1px solid rgba(255,255,255,.15);}
+  .tab-btn{flex:1;padding:9px 4px;border:none;background:transparent;color:rgba(255,255,255,.6);font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:background .2s,color .2s;}
+  .tab-btn .t-icon{font-size:1.1rem;}
+  .tab-btn.active{color:#fff;background:rgba(255,255,255,.12);border-bottom:3px solid var(--amber);}
+
+  /* PAGES */
+  .page{display:none;}.page.active{display:block;}
+
+  /* MAIN */
+  main{padding:14px 13px 110px;max-width:520px;margin:0 auto;width:100%;}
+
+  /* DAY CARDS */
+  .day-card{background:var(--card-bg);border-radius:var(--radius);margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;}
+  .day-header{display:flex;align-items:center;padding:10px 14px;background:var(--green);cursor:pointer;user-select:none;gap:8px;}
+  .day-header .day-name{font-weight:900;font-size:.95rem;color:#fff;flex:1;}
+  .day-header .day-emoji{font-size:1.1rem;}
+  .day-header .chevron{color:var(--green-lt);font-size:.9rem;transition:transform .25s;}
+  .day-card.open .day-header .chevron{transform:rotate(180deg);}
+  .day-meals{display:none;padding:10px 12px 12px;}
+  .day-card.open .day-meals{display:block;}
+
+  /* MEAL ROWS */
+  .meal-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .meal-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);width:68px;flex-shrink:0;}
+  .meal-input{flex:1;border:1.5px solid #E5E7EB;border-radius:8px;padding:7px 9px;font-family:'Nunito',sans-serif;font-size:.86rem;color:var(--charcoal);background:#FAFAFA;outline:none;transition:border-color .2s;}
+  .meal-input:focus{border-color:var(--green-lt);background:#fff;}
+  .meal-input::placeholder{color:#CBD5E1;}
+  .meal-row.breakfast .meal-label{color:var(--amber);}
+  .meal-row.lunch .meal-label{color:var(--green);}
+  .meal-row.dinner .meal-label{color:var(--rust);}
+  .meal-row.snack .meal-label{color:#7C3AED;}
+
+  /* WEEK NAV */
+  .week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
+  .week-nav button{background:var(--green);color:#fff;border:none;border-radius:8px;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .week-nav .week-range{flex:1;text-align:center;font-size:.78rem;font-weight:700;color:var(--green);}
+
+  /* TIP */
+  .tip-banner{background:linear-gradient(135deg,var(--green),var(--green-lt));color:#fff;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;font-size:.8rem;line-height:1.5;display:flex;gap:10px;align-items:center;}
+  .tip-banner .tip-icon{font-size:1.3rem;flex-shrink:0;}
+
+  /* BOTTOM BAR */
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1.5px solid #E5E7EB;display:flex;gap:8px;padding:8px 12px 20px;justify-content:center;z-index:100;}
+  .btn{flex:1;max-width:180px;border:none;border-radius:10px;padding:11px 6px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:opacity .15s,transform .1s;}
+  .btn:active{transform:scale(.97);opacity:.85;}
+  .btn-save{background:var(--green);color:#fff;}
+  .btn-list{background:var(--amber);color:#fff;}
+  .btn-clear{background:#F1F5F9;color:var(--muted);}
+
+  /* RECIPE PAGE */
+  .recipe-page{padding:14px 13px 40px;max-width:520px;margin:0 auto;width:100%;}
+  .recipe-add-btn{width:100%;border:none;border-radius:var(--radius);background:var(--green);color:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;padding:13px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .recipe-add-btn:active{opacity:.8;}
+
+  .recipe-card{background:var(--card-bg);border-radius:var(--radius);margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;}
+  .recipe-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
+  .recipe-header .r-title{flex:1;font-weight:900;font-size:.95rem;color:#fff;}
+  .recipe-header .r-cat{font-size:.68rem;background:rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;}
+  .recipe-header .r-chev{color:rgba(255,255,255,.7);transition:transform .25s;font-size:.9rem;}
+  .recipe-card.open .recipe-header .r-chev{transform:rotate(180deg);}
+  .recipe-body{display:none;padding:14px;}
+  .recipe-card.open .recipe-body{display:block;}
+
+  .recipe-meta{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
+  .recipe-meta span{font-size:.75rem;color:var(--muted);font-weight:700;}
+  .recipe-section-label{font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:10px 0 6px;}
+  .recipe-ingredients{list-style:none;}
+  .recipe-ingredients li{font-size:.85rem;padding:4px 0;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;gap:6px;}
+  .recipe-ingredients li::before{content:'•';color:var(--green-lt);font-weight:900;}
+  .recipe-steps{counter-reset:step;list-style:none;}
+  .recipe-steps li{font-size:.85rem;padding:6px 0 6px 28px;position:relative;border-bottom:1px solid #F1F5F9;line-height:1.5;}
+  .recipe-steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:6px;background:var(--green);color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:900;}
+  .recipe-notes{font-size:.82rem;color:var(--muted);line-height:1.6;font-style:italic;background:#F8FFF9;border-left:3px solid var(--green-lt);padding:8px 10px;border-radius:0 6px 6px 0;margin-top:8px;}
+  .recipe-actions{display:flex;gap:8px;margin-top:12px;}
+  .r-btn{flex:1;border:none;border-radius:8px;padding:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer;}
+  .r-btn-edit{background:#EEF2FF;color:#4338CA;}
+  .r-btn-delete{background:#FEF2F2;color:var(--rust);}
+  .recipe-section-header{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin:18px 0 8px;padding:0 2px;}
+  .recipe-section-header span{font-size:1.1rem;}
+  .empty-recipes{text-align:center;color:var(--muted);padding:40px 16px;font-size:.9rem;line-height:1.8;}
+  .empty-recipes .big-icon{font-size:2.5rem;display:block;margin-bottom:8px;}
+
+  /* RECIPE FORM */
+  .recipe-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:flex-end;justify-content:center;}
+  .recipe-overlay.open{display:flex;}
+  .recipe-sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 40px;max-height:90vh;overflow-y:auto;}
+  .recipe-sheet h3{font-size:1rem;font-weight:900;color:var(--green);margin-bottom:14px;}
+  .form-group{margin-bottom:12px;}
+  .form-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px;}
+  .form-input,.form-textarea,.form-select{width:100%;border:1.5px solid #E5E7EB;border-radius:8px;padding:9px 11px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--charcoal);background:#FAFAFA;outline:none;transition:border-color .2s;}
+  .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--green-lt);background:#fff;}
+  .form-textarea{min-height:70px;resize:vertical;}
+  .form-row{display:flex;gap:10px;}
+  .form-row .form-group{flex:1;}
+  .form-actions{display:flex;gap:10px;margin-top:16px;}
+  .form-btn{flex:1;border:none;border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;}
+  .form-btn-save{background:var(--green);color:#fff;}
+  .form-btn-cancel{background:#F1F5F9;color:var(--muted);}
+
+  /* SHOPPING MODAL */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-end;justify-content:center;}
+  .overlay.open{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px 18px 40px;max-height:80vh;overflow-y:auto;}
+  .sheet h2{font-size:1.05rem;font-weight:900;margin-bottom:4px;color:var(--green);}
+  .sheet .sub{font-size:.75rem;color:var(--muted);margin-bottom:14px;}
+  .shopping-list{list-style:none;}
+  .shopping-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:.88rem;}
+  .shopping-list li input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;}
+  .shopping-list li.checked span{text-decoration:line-through;color:var(--muted);}
+  .empty-list{text-align:center;color:var(--muted);padding:28px 0;font-size:.88rem;}
+  .sheet-close{float:right;background:#F1F5F9;border:none;border-radius:8px;padding:5px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;color:var(--charcoal);}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--charcoal);color:#fff;padding:9px 18px;border-radius:30px;font-size:.83rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap;z-index:500;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* FOOTER */
+  footer{text-align:center;padding:24px 16px 20px;font-size:.7rem;color:var(--muted);line-height:2;border-top:1px solid #E5E7EB;margin-top:16px;}
+  footer .copy-leaf{font-size:1.4rem;margin-bottom:4px;}
+  footer .copy-title{font-weight:900;color:var(--green);font-size:.8rem;letter-spacing:.5px;}
+  footer .copy-school{font-weight:700;color:var(--charcoal);font-size:.75rem;}
+  footer .copy-year{font-size:.65rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🥗</div>
+  <div class="logo-text">
+    <h1>Food-n-Me</h1>
+    <p>My Weekly Meal Planner</p>
+  </div>
+  <div class="week-label" id="weekLabel">This Week</div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="planner">
+    <span class="t-icon">📅</span>Planner
+  </button>
+  <button class="tab-btn" data-tab="recipes">
+    <span class="t-icon">📖</span>Recipes
+  </button>
+</nav>
+
+<!-- PLANNER PAGE -->
+<div class="page active" id="page-planner">
+  <main>
+    <div class="tip-banner">
+      <span class="tip-icon">💡</span>
+      <span>Tap a day to plan your meals. Your plan is saved automatically on this device!</span>
+    </div>
+    <div class="week-nav">
+      <button id="prevWeek">&#8592;</button>
+      <div class="week-range" id="weekRange">Loading…</div>
+      <button id="nextWeek">&#8594;</button>
+    </div>
+    <div id="daysContainer"></div>
+    <footer>
+      <div class="copy-leaf">🌿</div>
+      <div class="copy-title">© 2026 Food-n-Me</div>
+      <div class="copy-school">Pinksweat 2026</div>
+      <div class="copy-school">@Pinksweat</div>
+      <div class="copy-year">All rights reserved.</div>
+    </footer>
+  </main>
+  <div class="bottom-bar">
+    <button class="btn btn-save" onclick="saveAll()">💾 Save Plan</button>
+    <button class="btn btn-list" onclick="openShoppingList()">🛒 Shopping</button>
+    <button class="btn btn-clear" onclick="clearWeek()">🗑 Clear</button>
+  </div>
+</div>
+
+<!-- RECIPES PAGE -->
+<div class="page" id="page-recipes">
+  <div class="recipe-page">
+    <button class="recipe-add-btn" onclick="openRecipeForm()">➕ Add New Recipe</button>
+    <div id="recipesContainer"></div>
+    <footer>
+      <div class="copy-leaf">🌿</div>
+      <div class="copy-title">© 2026 Food-n-Me</div>
+      <div class="copy-school">Pinksweat 2026</div>
+      <div class="copy-school">@Pinksweat</div>
+      <div class="copy-year">All rights reserved.</div>
+    </footer>
+  </div>
+</div>
+
+<!-- SHOPPING MODAL -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="sheet">
+    <button class="sheet-close" onclick="document.getElementById('overlay').classList.remove('open')">Close ✕</button>
+    <h2>🛒 Shopping List</h2>
+    <p class="sub">All meals this week — tap to mark as bought.</p>
+    <ul class="shopping-list" id="shoppingList"></ul>
+  </div>
+</div>
+
+<!-- RECIPE FORM MODAL -->
+<div class="recipe-overlay" id="recipeOverlay" onclick="closeRecipeOverlay(event)">
+  <div class="recipe-sheet">
+    <h3 id="recipeFormTitle">➕ Add New Recipe</h3>
+    <div class="form-group">
+      <label class="form-label">Recipe Name *</label>
+      <input class="form-input" id="rf-name" type="text" placeholder="e.g. Jollof Rice"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="rf-cat">
+          <option>Breakfast</option><option>Lunch</option><option>Dinner</option>
+          <option>Snack</option><option>Dessert</option><option>Drink</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prep Time</label>
+        <input class="form-input" id="rf-time" type="text" placeholder="e.g. 30 mins"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Serves</label>
+        <input class="form-input" id="rf-serves" type="text" placeholder="e.g. 4 people"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Difficulty</label>
+        <select class="form-select" id="rf-diff">
+          <option>Easy</option><option>Medium</option><option>Hard</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ingredients (one per line) *</label>
+      <textarea class="form-textarea" id="rf-ingredients" placeholder="2 cups rice&#10;1 tin tomatoes&#10;Salt to taste"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cooking Steps (one per line) *</label>
+      <textarea class="form-textarea" id="rf-steps" placeholder="Wash and soak rice for 10 minutes&#10;Blend tomatoes and pepper&#10;Fry onions in oil..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Tips (optional)</label>
+      <textarea class="form-textarea" id="rf-notes" style="min-height:50px" placeholder="e.g. Best served hot with fried plantain!"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="form-btn form-btn-cancel" onclick="closeRecipeForm()">Cancel</button>
+      <button class="form-btn form-btn-save" onclick="saveRecipe()">💾 Save Recipe</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const EMOJIS = ['🌤','🌞','🌈','⭐','🎉','🌺','🌻'];
+const MEALS  = [
+  {key:'breakfast',label:'Breakfast',ph:'e.g. Oats & banana'},
+  {key:'lunch',label:'Lunch',ph:'e.g. Rice & stew'},
+  {key:'dinner',label:'Dinner',ph:'e.g. Yam & egg sauce'},
+  {key:'snack',label:'Snack',ph:'e.g. Groundnut, fruit'},
+];
+const CAT_COLORS = {Breakfast:'#D4A017',Lunch:'#2D6A4F',Dinner:'#BC4749',Snack:'#7C3AED',Dessert:'#DB2777',Drink:'#0891B2'};
+
+let weekOffset = 0, editingRecipeId = null;
+
+// TAB SWITCHING
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'recipes') buildRecipes();
+  });
+});
+
+// WEEK UTILS
+function getWeekStart(offset=0) {
+  const now=new Date(),day=now.getDay(),mon=new Date(now);
+  mon.setDate(now.getDate()-(day===0?6:day-1)+offset*7);
+  mon.setHours(0,0,0,0); return mon;
+}
+function weekKey(o){return `fnm_week_${getWeekStart(o).toISOString().slice(0,10)}`;}
+function fmt(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function updateWeekDisplay(){
+  const s=getWeekStart(weekOffset),e=new Date(s);e.setDate(s.getDate()+6);
+  document.getElementById('weekRange').textContent=`${fmt(s)} – ${fmt(e)}`;
+  document.getElementById('weekLabel').textContent=weekOffset===0?'This Week':weekOffset===-1?'Last Week':weekOffset===1?'Next Week':`Week ${weekOffset>0?'+':''}${weekOffset}`;
+}
+
+// PLANNER STORAGE
+function loadData(){try{return JSON.parse(localStorage.getItem(weekKey(weekOffset))||'{}');}catch{return {};}}
+function saveData(d){localStorage.setItem(weekKey(weekOffset),JSON.stringify(d));}
+
+// BUILD PLANNER
+function buildDays(){
+  const data=loadData(),container=document.getElementById('daysContainer');
+  container.innerHTML='';
+  const todayIdx=(new Date().getDay()+6)%7;
+  DAYS.forEach((day,i)=>{
+    const card=document.createElement('div');card.className='day-card';
+    if(weekOffset===0&&i===todayIdx)card.classList.add('open');
+    const header=document.createElement('div');header.className='day-header';
+    header.innerHTML=`<span class="day-emoji">${EMOJIS[i]}</span><span class="day-name">${day}</span><span class="chevron">▾</span>`;
+    header.addEventListener('click',()=>card.classList.toggle('open'));
+    const mealsDiv=document.createElement('div');mealsDiv.className='day-meals';
+    MEALS.forEach(m=>{
+      const row=document.createElement('div');row.className=`meal-row ${m.key}`;
+      const val=(data[day]&&data[day][m.key])||'';
+      row.innerHTML=`<span class="meal-label">${m.label}</span>
+        <input class="meal-input" type="text" placeholder="${m.ph}" value="${val.replace(/"/g,'&quot;')}"
+          data-day="${day}" data-meal="${m.key}" aria-label="${day} ${m.label}"/>`;
+      mealsDiv.appendChild(row);
+    });
+    card.appendChild(header);card.appendChild(mealsDiv);container.appendChild(card);
+  });
+}
+
+function saveAll(){
+  const data={};
+  document.querySelectorAll('.meal-input').forEach(inp=>{
+    const{day,meal}=inp.dataset;if(!data[day])data[day]={};data[day][meal]=inp.value.trim();
+  });
+  saveData(data);showToast('✅ Meal plan saved!');
+}
+function clearWeek(){
+  if(!confirm('Clear all meals for this week?'))return;
+  localStorage.removeItem(weekKey(weekOffset));buildDays();showToast('🗑 Week cleared.');
+}
+
+// SHOPPING LIST
+function openShoppingList(){
+  const data=loadData(),list=document.getElementById('shoppingList');
+  list.innerHTML='';let count=0;
+  DAYS.forEach(day=>MEALS.forEach(m=>{
+    const val=data[day]&&data[day][m.key];
+    if(val){count++;const li=document.createElement('li');
+      li.innerHTML=`<input type="checkbox" onchange="this.closest('li').classList.toggle('checked',this.checked)">
+        <span><strong>${day}</strong> ${m.label}: ${val}</span>`;
+      list.appendChild(li);}
+  }));
+  if(!count)list.innerHTML='<div class="empty-list">No meals planned yet.<br>Add some meals first! 🥘</div>';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeOverlay(e){if(e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.remove('open');}
+
+// RECIPE STORAGE
+// PRE-LOADED RECIPES
+const DEFAULT_RECIPES = [
+  {id:'d1',isDefault:true,name:'Jollof Rice',category:'Lunch',time:'45 mins',serves:'4-6 people',diff:'Medium',
+   ingredients:['3 cups parboiled rice','400g tomato paste','3 fresh tomatoes','2 red bell peppers','2 scotch bonnet peppers','1 large onion','4 tbsp vegetable oil','2 seasoning cubes','1 tsp curry powder','1 tsp thyme','2 cups chicken stock','Salt to taste'],
+   steps:['Blend tomatoes, bell peppers, scotch bonnet and half the onion until smooth.','Heat oil in a pot, fry remaining chopped onion for 2 minutes.','Add tomato paste, fry 5 minutes, then add blended mixture. Cook 15 minutes until the raw smell disappears.','Add chicken stock, curry, thyme, seasoning cubes and salt. Bring to a boil.','Wash rice, add to the pot, stir well, cover tightly and cook on low heat for 25-30 minutes.','Stir occasionally to prevent burning. Add a little water if needed.'],
+   notes:'For smoky party jollof, let the bottom toast slightly before turning off the heat. Serve with fried plantain and coleslaw!'},
+
+  {id:'d2',isDefault:true,name:'Egusi Soup',category:'Dinner',time:'50 mins',serves:'4-6 people',diff:'Medium',
+   ingredients:['2 cups ground egusi (melon seeds)','500g assorted meat (beef, tripe, ponmo)','200g stockfish','2 cups chopped spinach or bitter leaf','3 tbsp palm oil','2 tomatoes','2 scotch bonnet peppers','1 large onion','2 seasoning cubes','Salt to taste'],
+   steps:['Boil assorted meat and stockfish with onion, seasoning and salt until tender. Reserve the stock.','Blend tomatoes, peppers and half the onion. Set aside.','Heat palm oil, add blended mixture and fry for 10 minutes.','Mix ground egusi with water to a paste. Drop in spoonfuls into the pot. Cook 10 minutes without stirring.','Add meat stock, meat and stockfish. Stir and cook 10 minutes.','Add washed spinach or bitter leaf, cook 5 more minutes.'],
+   notes:'Do not stir egusi immediately after adding - let it set first to get fluffy lumps. Serve with pounded yam or eba.'},
+
+  {id:'d3',isDefault:true,name:'Pounded Yam & Oha Soup',category:'Dinner',time:'60 mins',serves:'4 people',diff:'Hard',
+   ingredients:['1 medium yam tuber','300g assorted meat','100g stockfish','2 cups fresh oha leaves (shredded)','2 tbsp cocoyam paste','3 tbsp palm oil','2 scotch bonnet peppers','1 onion','2 seasoning cubes','Salt to taste'],
+   steps:['Peel and boil yam until very soft. Pound in a mortar until smooth and stretchy. Set aside.','Boil meat and stockfish with seasoning. Reserve stock.','Heat palm oil, fry blended peppers and onion for 5 minutes.','Add meat stock, bring to boil. Whisk in cocoyam paste gradually to thicken.','Add meat, stockfish, crayfish, seasoning and salt. Simmer 10 minutes.','Add shredded oha leaves, stir gently, cook 3 minutes. Remove from heat immediately.'],
+   notes:'Oha leaves lose colour if overcooked - add them last and serve immediately.'},
+
+  {id:'d4',isDefault:true,name:'Moi Moi',category:'Lunch',time:'60 mins',serves:'6 people',diff:'Medium',
+   ingredients:['3 cups black-eyed beans','2 red bell peppers','2 scotch bonnet peppers','1 large onion','4 tbsp vegetable oil','2 seasoning cubes','3 eggs (hard boiled, optional)','Salt to taste'],
+   steps:['Soak beans 30 minutes, rub to remove skins and rinse thoroughly.','Blend beans with peppers and onion until very smooth, adding water gradually for a thick batter.','Add oil, seasoning cubes and salt. Mix well.','Pour batter into greased foil cups, adding a slice of egg if desired.','Steam in a covered pot for 45-50 minutes until firm.','Test by inserting a skewer - it should come out clean.'],
+   notes:'The smoother the blend, the better your moi moi. You can also add crayfish, corned beef or sardines for extra flavour.'},
+
+  {id:'d5',isDefault:true,name:'Suya',category:'Snack',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['500g beef (sirloin, thinly sliced)','3 tbsp groundnut powder','1 tsp paprika','1 tsp garlic powder','1 tsp ginger powder','1 tsp onion powder','1 tsp chilli flakes','Salt to taste','Vegetable oil for brushing'],
+   steps:['Mix all dry spices and groundnut powder to make suya spice (yaji).','Coat beef slices generously with spice mix. Marinate at least 30 minutes.','Thread beef onto skewers.','Grill over charcoal or in oven at 200°C, turning and brushing with oil every 5 minutes.','Cook 15-20 minutes until charred and cooked through.','Serve with sliced onions, tomatoes and extra yaji spice.'],
+   notes:'Charcoal grilling gives the best smoky flavour. Slice beef as thin as possible for crispy edges.'},
+
+  {id:'d6',isDefault:true,name:'Akara (Bean Cakes)',category:'Breakfast',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['2 cups black-eyed beans (peeled)','1 small onion','1-2 scotch bonnet peppers','Salt to taste','Vegetable oil for deep frying'],
+   steps:['Soak beans and remove skins by rubbing between palms. Rinse well.','Blend beans with onion and peppers using as little water as possible for a thick paste.','Add salt and whip batter vigorously with a spoon for 5 minutes to add air.','Heat oil in a deep pot. Drop spoonfuls of batter into oil.','Fry on medium heat for 3-4 minutes per side until golden brown.','Drain on paper towels and serve hot.'],
+   notes:'Whipping air into the batter is the secret to fluffy akara. Serve with akamu (pap) or bread for a classic Nigerian breakfast.'},
+
+  {id:'d7',isDefault:true,name:'Banga Soup (Ofe Akwu)',category:'Dinner',time:'60 mins',serves:'4 people',diff:'Medium',
+   ingredients:['2kg fresh palm fruits (or 400ml palm fruit concentrate)','500g catfish or assorted meat','1 onion','2 scotch bonnet peppers','Banga spices (oburunbebe stick, beletete, atariko)','2 tbsp ground crayfish','Salt and seasoning to taste'],
+   steps:['Boil palm fruits until soft, pound and extract juice with warm water. Strain out the chaff.','Pour palm fruit juice into a pot and boil until slightly thickened.','Add meat, catfish, onion, peppers and crayfish.','Add banga spices for the distinctive aroma.','Season with salt and seasoning cubes. Simmer 20-25 minutes.','Adjust consistency by cooking longer to thicken or adding water to loosen.'],
+   notes:'A Delta State specialty. The special banga spices are what make this unique - available in most Nigerian markets.'},
+
+  {id:'d8',isDefault:true,name:'Fried Plantain (Dodo)',category:'Snack',time:'15 mins',serves:'4 people',diff:'Easy',
+   ingredients:['2 ripe plantains (yellow with black spots)','Vegetable oil for frying','A pinch of salt (optional)'],
+   steps:['Peel plantains and slice diagonally into medium-thick pieces.','Heat oil in a frying pan over medium heat.','Fry plantain slices in batches, turning after 2-3 minutes when golden underneath.','Cook the other side 2-3 minutes until caramelised and golden.','Remove and drain on paper towels.','Serve immediately as a side dish or snack.'],
+   notes:'The riper the plantain, the sweeter the dodo! Overripe plantains with lots of black spots give the best caramelised result.'},
+
+  {id:'d9',isDefault:true,name:'Pepper Soup',category:'Dinner',time:'40 mins',serves:'4 people',diff:'Easy',
+   ingredients:['500g goat meat or catfish','2 tbsp pepper soup spice mix','1 scotch bonnet pepper','1 onion','2 seasoning cubes','Fresh utazi leaves (optional)','Salt to taste','Water'],
+   steps:['Wash and cut meat or fish into chunks.','Place in pot with onion, seasoning cubes and enough water to cover. Boil 15 minutes.','Add pepper soup spice mix and scotch bonnet pepper.','Continue cooking on medium heat for 20 minutes until meat is tender and broth is flavourful.','Add salt to taste and utazi leaves if using. Cook 2 more minutes.','Serve hot as a starter or light meal.'],
+   notes:'A popular Nigerian comfort food especially in cold weather or after celebrations. Also believed to aid digestion.'},
+
+  {id:'d10',isDefault:true,name:'Tuwo Shinkafa & Miyan Kuka',category:'Dinner',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['3 cups soft rice (for tuwo)','100g powdered baobab leaves (kuka)','300g beef or lamb','3 tbsp palm oil','1 onion','2 scotch bonnet peppers','2 tbsp ground crayfish','2 seasoning cubes','Salt to taste'],
+   steps:['Cook rice with extra water, stirring frequently until very soft and sticky. Mould into balls with a wet spoon. Set aside.','Boil meat with onion, seasoning and salt until tender. Reserve stock.','Heat palm oil in a pot and fry onion for 2 minutes.','Add meat stock and bring to boil. Gradually whisk in kuka powder to avoid lumps.','Add meat, crayfish, peppers and remaining seasoning. Simmer 15 minutes.','Adjust salt and serve alongside tuwo shinkafa balls.'],
+   notes:'A beloved Northern Nigerian dish. Kuka (baobab leaf) gives the soup its distinctive dark green colour and earthy taste.'},
+
+  // INTERCONTINENTAL
+  {id:'d11',isDefault:true,name:'Spaghetti Carbonara',category:'Dinner',time:'25 mins',serves:'4 people',diff:'Medium',
+   ingredients:['400g spaghetti','200g pancetta or bacon (cubed)','4 egg yolks','1 whole egg','100g Pecorino Romano cheese (grated)','2 garlic cloves','Black pepper (generous)','Salt for pasta water'],
+   steps:['Boil salted water and cook spaghetti until al dente. Reserve 1 cup pasta water before draining.','Fry pancetta with garlic until crispy. Remove garlic.','Whisk egg yolks, whole egg and cheese together. Season with black pepper.','Remove pan from heat. Add drained spaghetti to pancetta and toss.','Add egg mixture and toss quickly, adding pasta water little by little to form a creamy sauce.','Serve immediately with extra cheese and black pepper.'],
+   notes:'Never add the egg mixture while the pan is on heat or you will get scrambled eggs! The residual heat from the pasta cooks the sauce. A classic Italian dish from Rome.'},
+
+  {id:'d12',isDefault:true,name:'Chicken Tikka Masala',category:'Dinner',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['600g chicken breast (cubed)','200ml plain yoghurt','2 tsp garam masala','1 tsp turmeric','1 tsp cumin','1 tsp paprika','400ml tomato passata','200ml heavy cream','2 onions','4 garlic cloves','1 tbsp ginger paste','3 tbsp vegetable oil','Salt to taste'],
+   steps:['Marinate chicken in yoghurt, half the spices and salt for at least 30 minutes.','Grill or pan-fry marinated chicken until charred. Set aside.','Fry onions in oil until golden. Add garlic and ginger paste, cook 2 minutes.','Add remaining spices and fry 1 minute until fragrant.','Add tomato passata, stir well, simmer 15 minutes.','Add grilled chicken and cream. Simmer 10 minutes. Serve with naan or rice.'],
+   notes:'The yoghurt marinade tenderises the chicken beautifully. One of the most popular dishes worldwide, originally from the Indian subcontinent.'},
+
+  {id:'d13',isDefault:true,name:'French Croissants',category:'Breakfast',time:'3 hours',serves:'8 croissants',diff:'Hard',
+   ingredients:['500g strong white flour','10g salt','80g sugar','10g instant yeast','300ml warm milk','250g cold unsalted butter (for laminating)','1 egg (for egg wash)'],
+   steps:['Mix flour, salt, sugar and yeast. Add warm milk and knead 10 minutes to form a smooth dough. Refrigerate 1 hour.','Beat cold butter into a flat rectangle. Place on rolled-out dough and fold dough over butter.','Roll and fold the dough 3 times (letter fold), refrigerating 30 minutes between each fold.','Roll dough into a large rectangle and cut into triangles.','Roll each triangle from wide end to tip. Curve ends to form a crescent shape.','Let rise 1-2 hours, brush with egg wash and bake at 190°C for 18-20 minutes until golden.'],
+   notes:'The key to flaky croissants is keeping the butter cold throughout. Work quickly and refrigerate whenever the dough feels warm.'},
+
+  {id:'d14',isDefault:true,name:'Tacos al Pastor',category:'Lunch',time:'40 mins',serves:'4 people',diff:'Medium',
+   ingredients:['500g pork shoulder (thinly sliced)','3 dried guajillo chillies','2 chipotle chillies in adobo','1 tsp cumin','1 tsp oregano','3 garlic cloves','3 tbsp white vinegar','1 pineapple slice','Small corn tortillas','Onion, coriander and lime to serve'],
+   steps:['Soak dried chillies in hot water for 15 minutes until soft. Drain.','Blend soaked chillies, chipotle, garlic, cumin, oregano and vinegar into a smooth marinade.','Coat pork slices in marinade and leave at least 30 minutes.','Cook marinated pork in a hot griddle pan for 3-4 minutes per side.','Grill pineapple slice until caramelised.','Chop pork and pineapple, pile onto warm tortillas. Top with diced onion, coriander and lime juice.'],
+   notes:'A beloved Mexican street food inspired by Lebanese shawarma. The pineapple tenderises the pork and adds a sweet contrast to the spices.'},
+
+  {id:'d15',isDefault:true,name:'Greek Moussaka',category:'Dinner',time:'90 mins',serves:'6 people',diff:'Hard',
+   ingredients:['2 large aubergines (sliced)','500g minced lamb or beef','400g tinned tomatoes','1 onion','3 garlic cloves','1 tsp cinnamon','1 tsp allspice','500ml bechamel sauce (butter, flour, milk)','100g grated Parmesan','Olive oil, salt and pepper'],
+   steps:['Salt aubergine slices, leave 20 minutes, rinse and pat dry. Fry in olive oil until golden. Set aside.','Fry onion and garlic until soft. Add mince and brown well.','Add tinned tomatoes, cinnamon, allspice, salt and pepper. Simmer 20 minutes.','Make bechamel: melt butter, whisk in flour, gradually add milk. Stir until thick. Mix in half the cheese.','Layer aubergine, then meat sauce, then repeat. Top with bechamel and remaining cheese.','Bake at 180°C for 45 minutes until golden and bubbling.'],
+   notes:'Moussaka improves overnight as the flavours deepen. A staple of Greek home cooking, best enjoyed the next day.'},
+
+  {id:'d16',isDefault:true,name:'Japanese Ramen',category:'Lunch',time:'60 mins',serves:'4 people',diff:'Medium',
+   ingredients:['400g ramen noodles','1 litre chicken or pork broth','4 tbsp soy sauce','2 tbsp mirin','1 tbsp sesame oil','200g pork belly (sliced)','4 soft-boiled eggs','Spring onions','Nori sheets','Bean sprouts'],
+   steps:['Combine stock with soy sauce, mirin and sesame oil. Simmer 20 minutes.','Pan-fry pork belly slices until caramelised.','Soft-boil eggs exactly 6.5 minutes, then marinate in soy sauce and mirin for 30+ minutes.','Cook ramen noodles. Drain.','Pour hot broth into bowls. Add noodles.','Top with pork, halved marinated egg, spring onions, nori and bean sprouts.'],
+   notes:'The quality of your broth is everything in ramen. For the richest flavour, simmer bones for several hours. The marinated egg can be prepared the day before.'},
+
+  {id:'d17',isDefault:true,name:'Beef Lasagne',category:'Dinner',time:'75 mins',serves:'6 people',diff:'Medium',
+   ingredients:['12 lasagne sheets','500g minced beef','400g tinned tomatoes','1 onion','3 garlic cloves','2 tbsp tomato paste','500ml bechamel sauce','150g mozzarella (grated)','50g Parmesan (grated)','1 tsp dried basil','Olive oil, salt and pepper'],
+   steps:['Fry onion and garlic in olive oil until soft. Add minced beef and brown well.','Add tomato paste, tinned tomatoes, basil, salt and pepper. Simmer 20 minutes.','Cook lasagne sheets in boiling salted water until slightly tender. Drain.','In a baking dish, layer meat sauce, then lasagne sheets, then bechamel. Repeat layers.','Finish with bechamel on top. Scatter mozzarella and Parmesan over the top.','Bake at 180°C for 35-40 minutes until golden and bubbling. Rest 10 minutes before cutting.'],
+   notes:'Lasagne is always better the next day! Make it ahead and refrigerate. Cover with foil when reheating to avoid burning the top.'},
+
+  {id:'d18',isDefault:true,name:'Tom Yum Soup',category:'Lunch',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['300g prawns (peeled)','1 litre chicken stock','3 stalks lemongrass (bruised)','5 kaffir lime leaves','3 slices galangal or ginger','3 tbsp fish sauce','2 tbsp lime juice','2 tbsp chilli paste (nam prik pao)','200g mushrooms','1 tomato (quartered)','Fresh coriander to garnish'],
+   steps:['Bring chicken stock to boil. Add lemongrass, kaffir lime leaves and galangal. Simmer 5 minutes.','Add chilli paste and stir to combine.','Add mushrooms and tomato. Cook 3 minutes.','Add prawns and cook 2-3 minutes until pink and cooked through.','Season with fish sauce and lime juice. Taste and adjust.','Serve immediately, garnished with fresh coriander.'],
+   notes:'A fragrant, spicy and sour Thai soup. The lemongrass, galangal and lime leaves are flavour aromatics and not meant to be eaten - remove before serving or warn guests.'},
+
+  {id:'d19',isDefault:true,name:'American Pancakes',category:'Breakfast',time:'25 mins',serves:'4 people',diff:'Easy',
+   ingredients:['2 cups all-purpose flour','2 tbsp sugar','2 tsp baking powder','1/2 tsp salt','2 eggs','1.5 cups milk','3 tbsp melted butter','1 tsp vanilla extract','Butter for cooking'],
+   steps:['Whisk together flour, sugar, baking powder and salt in a large bowl.','In a separate bowl, beat eggs, then mix in milk, melted butter and vanilla.','Pour wet ingredients into dry ingredients and mix gently - a few lumps are fine. Do not overmix.','Heat a non-stick pan over medium heat and lightly grease with butter.','Pour about 1/4 cup of batter per pancake. Cook until bubbles form on the surface, then flip.','Cook other side 1-2 minutes until golden. Serve stacked with maple syrup and fresh berries.'],
+   notes:'The secret to fluffy pancakes is NOT overmixing the batter - lumps are your friend! Overmixing develops gluten and makes them flat and tough.'},
+
+  {id:'d20',isDefault:true,name:'Spanish Paella',category:'Dinner',time:'55 mins',serves:'4 people',diff:'Medium',
+   ingredients:['2 cups paella rice (Bomba or Arborio)','400g chicken thighs (bone-in)','200g prawns','100g chorizo (sliced)','1 large onion','4 garlic cloves','400g tinned tomatoes','1 litre chicken stock','1 tsp smoked paprika','1/2 tsp saffron threads','150g frozen peas','Olive oil, salt and lemon to serve'],
+   steps:['Soak saffron in 3 tbsp warm water for 10 minutes.','Heat olive oil in a wide paella pan. Brown chicken and chorizo. Set aside.','Fry onion and garlic until soft. Add paprika and tinned tomatoes. Cook 5 minutes.','Add rice and stir to coat with the tomato mixture.','Pour in hot stock and saffron water. Add chicken and chorizo back. Do NOT stir from this point.','Cook on medium heat 20 minutes. Add prawns and peas in the last 5 minutes. Let the bottom crust slightly (socarrat). Rest 5 minutes. Serve with lemon wedges.'],
+   notes:'The socarrat (crispy rice at the bottom) is the most prized part of paella. Listen for a gentle crackling sound near the end. Never stir after adding the stock!'},
+
+  // MORE NIGERIAN DISHES
+  {id:'d21',isDefault:true,name:'Ofada Rice & Ayamase Stew',category:'Lunch',time:'55 mins',serves:'4 people',diff:'Medium',
+   ingredients:['3 cups ofada rice','8 green bell peppers','4 green scotch bonnet peppers','2 cups bleached palm oil','300g assorted meat (tripe, shaki)','200g smoked fish','2 seasoning cubes','1 large onion','Locust beans (iru) to taste','Salt to taste'],
+   steps:['Wash ofada rice thoroughly and cook until tender. Set aside.','Blend green peppers and scotch bonnet coarsely - do not liquefy.','Bleach palm oil in a pot until it lightens in colour, being careful of smoke.','Add chopped onion and blended pepper mix, fry until the water dries up.','Add cooked assorted meat, smoked fish, locust beans, seasoning and salt. Simmer 15 minutes.','Serve the stew over ofada rice, traditionally wrapped in banana leaves.'],
+   notes:'Bleaching the palm oil is the secret to authentic ayamase flavour. Open a window - the process can be smoky!'},
+
+  {id:'d22',isDefault:true,name:'Ewa Agoyin',category:'Breakfast',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['3 cups honey beans (oloyin)','1 onion','2 tsp potash (optional, for softening)','1 cup palm oil','8 dried red chillies','3 dried bell peppers','1 onion (for sauce)','2 seasoning cubes','Salt to taste'],
+   steps:['Boil beans with a pinch of potash until very soft and mashable. Mash lightly and season with salt.','Blend dried chillies and peppers with a little water to a coarse paste.','Heat palm oil until it begins to smoke slightly, then reduce heat.','Add blended pepper and chopped onion, fry until oil separates and darkens, about 15 minutes.','Season sauce with seasoning cubes and salt.','Serve mashed beans topped generously with the agoyin sauce, alongside bread or agege bread.'],
+   notes:'Long, slow frying of the pepper sauce is what gives agoyin its deep, dark flavour - do not rush this step.'},
+
+  {id:'d23',isDefault:true,name:'Nkwobi',category:'Snack',time:'70 mins',serves:'4 people',diff:'Medium',
+   ingredients:['1kg cow foot (cut into chunks)','1/2 cup palm oil','3 tbsp potash solution','2 tbsp ground crayfish','2 scotch bonnet peppers','1 seasoning cube','1 onion (sliced, to serve)','Utazi leaves (sliced, to garnish)','Salt to taste'],
+   steps:['Boil cow foot with onion, seasoning and salt until very tender, about 45 minutes.','Heat palm oil gently, then whisk in potash solution until it thickens into a paste.','Blend crayfish and scotch bonnet, stir into the palm oil paste.','Add cooked cow foot to the sauce and toss until well coated.','Transfer to a traditional wooden bowl if available.','Garnish with sliced onions and utazi leaves before serving.'],
+   notes:'A festive Igbo delicacy often served at parties. Potash gives the sauce its distinctive thick, creamy texture.'},
+
+  {id:'d24',isDefault:true,name:'Yam Porridge (Asaro)',category:'Lunch',time:'45 mins',serves:'4 people',diff:'Easy',
+   ingredients:['1 medium yam tuber (cubed)','3 tomatoes','2 red bell peppers','1 scotch bonnet pepper','1/2 cup palm oil','1 onion','200g smoked fish (flaked)','1 cup spinach or ugu leaves','2 seasoning cubes','Salt to taste'],
+   steps:['Blend tomatoes, bell peppers, scotch bonnet and half the onion.','Place cubed yam in a pot with enough water to cover. Add remaining chopped onion.','Add blended pepper mixture, palm oil, seasoning cubes and salt.','Cook on medium heat until yam is soft and starts to break down, stirring occasionally, about 25 minutes.','Add smoked fish and mash some of the yam lightly to thicken the porridge.','Stir in leafy greens, cook 3 more minutes and serve hot.'],
+   notes:'Mash a portion of the yam against the pot to naturally thicken the porridge without needing extra starch.'},
+
+  {id:'d25',isDefault:true,name:'Efo Riro',category:'Dinner',time:'45 mins',serves:'4 people',diff:'Medium',
+   ingredients:['4 cups chopped spinach or shoko leaves','3 tomatoes','2 red bell peppers','2 scotch bonnet peppers','1/2 cup palm oil','300g assorted meat','150g smoked fish','2 tbsp ground crayfish','1 onion','2 seasoning cubes','Salt to taste'],
+   steps:['Blend tomatoes, bell peppers and scotch bonnet peppers roughly.','Heat palm oil, fry chopped onion for 2 minutes.','Add blended pepper mixture and fry for 10-15 minutes until reduced.','Add cooked assorted meat, smoked fish, crayfish, seasoning cubes and salt. Simmer 10 minutes.','Wash spinach thoroughly and add to the pot.','Stir and cook 3-5 minutes only, to keep the greens vibrant. Serve with any swallow.'],
+   notes:'Do not overcook the vegetables - efo riro should retain a bright green colour and slight bite.'},
+
+  {id:'d26',isDefault:true,name:'Chin Chin',category:'Snack',time:'40 mins',serves:'8 people',diff:'Easy',
+   ingredients:['4 cups flour','1/2 cup sugar','1/2 tsp nutmeg','1/2 tsp baking powder','1/2 cup butter (softened)','2 eggs','1/2 cup milk','Vegetable oil for deep frying','A pinch of salt'],
+   steps:['Mix flour, sugar, nutmeg, baking powder and salt in a large bowl.','Rub in softened butter until the mixture resembles breadcrumbs.','Beat eggs and milk together, then add to the dry mixture to form a firm dough.','Knead briefly, then roll out to about 1cm thickness on a floured surface.','Cut into small cubes or strips using a knife or pastry cutter.','Deep fry in batches on medium heat, stirring often, until golden and crunchy. Drain and cool completely before storing.'],
+   notes:'Fry on medium heat, not high - this ensures the chin chin cooks through and becomes crunchy rather than burning outside while staying soft inside.'},
+
+  {id:'d27',isDefault:true,name:'Ogbono Soup',category:'Dinner',time:'40 mins',serves:'4 people',diff:'Medium',
+   ingredients:['1 cup ground ogbono seeds','300g assorted meat','150g dried fish or stockfish','1/2 cup palm oil','2 cups chopped ugu or spinach leaves','2 tbsp ground crayfish','1 onion','2 scotch bonnet peppers','2 seasoning cubes','Salt to taste'],
+   steps:['Boil assorted meat and fish with onion, seasoning and salt until tender. Reserve stock.','Mix ground ogbono with a little palm oil to form a smooth paste.','Heat remaining palm oil in a pot, stir in ogbono paste and fry lightly for 2 minutes, stirring constantly to prevent lumps.','Gradually add hot meat stock while stirring vigorously to build the characteristic drawy texture.','Add meat, fish, crayfish and blended pepper. Simmer 10 minutes.','Stir in chopped vegetables and cook 3-5 more minutes before serving.'],
+   notes:'Constant stirring while adding stock is essential for that classic stretchy, "draw" texture ogbono is loved for.'},
+
+  {id:'d28',isDefault:true,name:'Ekpang Nkukwo',category:'Dinner',time:'90 mins',serves:'6 people',diff:'Hard',
+   ingredients:['2kg cocoyam (grated)','2 bunches cocoyam leaves (or fluted pumpkin leaves)','300g assorted meat','150g periwinkle or dried fish','1/2 cup palm oil','2 tbsp ground crayfish','2 scotch bonnet peppers','1 onion','2 seasoning cubes','Salt to taste'],
+   steps:['Peel and grate cocoyam finely. Wrap small portions in cocoyam leaves and roll tightly.','Boil assorted meat with onion, seasoning and salt until tender. Reserve stock.','Layer the wrapped cocoyam rolls into the pot with the meat stock.','Add palm oil, crayfish, blended pepper and periwinkle. Cover and simmer gently for about 45 minutes.','Check occasionally and add water if drying out, without stirring too much to keep rolls intact.','Once cocoyam rolls are soft and cooked through, serve hot directly from the pot.'],
+   notes:'A labour of love from the Efik/Ibibio people. Wrap the cocoyam rolls tightly so they hold together during the long simmer.'},
+
+  {id:'d29',isDefault:true,name:'Coconut Rice',category:'Lunch',time:'40 mins',serves:'4 people',diff:'Easy',
+   ingredients:['3 cups rice','2 cups coconut milk','1 cup fresh coconut chunks (optional)','2 tomatoes','1 red bell pepper','1 scotch bonnet pepper','1 onion','2 tbsp vegetable oil','1 seasoning cube','Salt to taste'],
+   steps:['Blend tomatoes, bell pepper, scotch bonnet and half the onion.','Wash rice and parboil until half-cooked. Drain and set aside.','Heat oil, fry remaining chopped onion, add blended pepper mixture. Cook 10 minutes.','Add coconut milk, seasoning cube and salt, bring to a gentle boil.','Add parboiled rice, stir well, cover and cook on low heat until rice is tender and liquid is absorbed, about 20 minutes.','Fluff with a fork and serve, garnished with fresh coconut chunks if desired.'],
+   notes:'Use full-fat coconut milk for the richest flavour. Keep the heat low once rice is added to avoid burning the bottom.'},
+
+  {id:'d30',isDefault:true,name:'Beans and Corn Porridge (Adalu)',category:'Lunch',time:'45 mins',serves:'4 people',diff:'Easy',
+   ingredients:['2 cups black-eyed beans','2 cups fresh or frozen corn kernels','3 tomatoes','1 red bell pepper','1/2 cup palm oil','1 onion','1 scotch bonnet pepper','2 seasoning cubes','Salt to taste'],
+   steps:['Boil beans until almost soft, about 30 minutes, adding water as needed.','Add corn kernels and continue boiling until both beans and corn are tender.','Blend tomatoes, bell pepper, scotch bonnet and a little of the onion.','Heat palm oil in a separate pan, fry chopped onion, then add blended pepper mixture. Cook 8 minutes.','Pour the pepper sauce into the beans and corn, add seasoning cubes and salt.','Simmer together for 10 minutes, mashing lightly to thicken, then serve hot with fried plantain.'],
+   notes:'A comforting one-pot meal. Mash a spoonful of the beans against the pot to help the porridge thicken naturally.'},
+
+  {id:'d31',isDefault:true,name:'Fisherman Soup',category:'Dinner',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['500g assorted fresh fish and seafood (catfish, prawns, periwinkle)','3 tomatoes','2 red bell peppers','2 scotch bonnet peppers','1/2 cup palm oil','1 onion','2 tbsp ground crayfish','Uziza leaves (a handful)','2 seasoning cubes','Salt to taste'],
+   steps:['Clean and cut fish and seafood into pieces.','Blend tomatoes, bell peppers, scotch bonnet and half the onion.','Heat palm oil, fry remaining chopped onion, add blended pepper mixture and fry 10 minutes.','Add water or fish stock, bring to a boil, then add crayfish, seasoning and salt.','Add fish and seafood, simmer gently for 10-15 minutes until just cooked - avoid overcooking.','Stir in uziza leaves in the last 2 minutes and serve hot.'],
+   notes:'A coastal favourite popular in riverine areas. Add delicate seafood last so it does not become rubbery.'},
+
+  {id:'d32',isDefault:true,name:'Fried Rice (Nigerian Style)',category:'Lunch',time:'40 mins',serves:'6 people',diff:'Medium',
+   ingredients:['4 cups rice','2 carrots (diced)','1 cup green beans (chopped)','1 cup sweetcorn','1 cup liver or chicken (diced)','3 tbsp vegetable oil','2 tbsp curry powder','1 tsp thyme','1 onion','2 seasoning cubes','Salt to taste'],
+   steps:['Parboil rice with a little salt until just tender but firm. Drain and spread out to cool and dry.','Boil carrots, green beans and sweetcorn briefly until just tender. Drain.','Heat oil, fry chopped onion, then add diced liver or chicken and brown.','Sprinkle curry powder and thyme over the meat, stir well.','Add cooled rice and vegetables to the pan, tossing gently to coat everything evenly with oil and spices.','Season with seasoning cubes and salt, stir-fry 5 minutes on medium-high heat and serve.'],
+   notes:'Drying the parboiled rice before frying prevents it from becoming mushy or clumping together.'},
+
+  {id:'d33',isDefault:true,name:'Ukwa (Breadfruit Porridge)',category:'Lunch',time:'80 mins',serves:'4 people',diff:'Medium',
+   ingredients:['3 cups dried african breadfruit (ukwa)','1/2 cup palm oil','150g dried fish or stockfish','1 onion','2 tbsp ground crayfish','2 scotch bonnet peppers','1 tsp uda spice (optional)','2 seasoning cubes','Salt to taste'],
+   steps:['Soak ukwa seeds overnight, then boil until very soft, about 45-60 minutes, changing water once.','In a separate pot, heat palm oil and fry chopped onion for 2 minutes.','Add blended scotch bonnet pepper and fry briefly.','Add softened ukwa to the pot along with a little of its cooking water.','Add dried fish, crayfish, uda spice, seasoning cubes and salt. Simmer together 15 minutes, mashing lightly.','Adjust consistency with water if needed and serve hot as a hearty porridge.'],
+   notes:'An Igbo delicacy rich in protein and fibre. Uda spice gives it a distinctive aromatic, slightly bitter note.'},
+
+  {id:'d34',isDefault:true,name:'Native Jollof Rice (Native Rice)',category:'Lunch',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['3 cups rice','300g assorted meat and smoked fish','2 cups ugu or spinach leaves','1/2 cup palm oil','3 tomatoes','1 onion','2 scotch bonnet peppers','2 tbsp ground crayfish','2 seasoning cubes','Salt to taste'],
+   steps:['Boil assorted meat with onion, seasoning and salt until tender. Reserve stock.','Blend tomatoes and scotch bonnet peppers coarsely.','Heat palm oil in a pot, fry chopped onion, then add blended tomato mixture. Fry 8 minutes.','Add meat stock, smoked fish, crayfish, seasoning and salt. Bring to a boil.','Add washed rice, stir, cover and cook on low heat until rice is tender, about 20-25 minutes.','Stir in chopped ugu leaves in the last 3 minutes of cooking and serve hot.'],
+   notes:'Also called "native rice", this rustic version uses palm oil instead of tomato paste for a more earthy, smoky flavour.'},
+
+  {id:'d35',isDefault:true,name:'Gizdodo',category:'Snack',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['500g gizzards','2 ripe plantains (sliced)','2 tomatoes','1 red bell pepper','1 scotch bonnet pepper','1 onion','3 tbsp vegetable oil','1 seasoning cube','Salt to taste'],
+   steps:['Boil gizzards with a little salt and seasoning until tender, about 20 minutes, then cut into bite-sized pieces.','Fry plantain slices in oil until golden on both sides. Set aside.','Blend tomatoes, bell pepper and scotch bonnet pepper.','In the same oil, fry chopped onion, then add blended pepper mixture. Cook 10 minutes until thickened.','Add cooked gizzards to the sauce, season with seasoning cube and salt, simmer 5 minutes.','Fold in the fried plantain, toss gently to combine and serve warm as a party snack.'],
+   notes:'A popular Nigerian party small chop. Fry the plantain just before combining so it keeps a little texture.'},
+
+  {id:'d36',isDefault:true,name:'Bitterleaf Soup (Ofe Onugbu)',category:'Dinner',time:'60 mins',serves:'4 people',diff:'Medium',
+   ingredients:['2 cups washed bitterleaf (onugbu)','300g assorted meat','150g stockfish or dried fish','1/2 cup palm oil','2 tbsp cocoyam paste (achi or ede)','2 tbsp ground crayfish','1 onion','2 scotch bonnet peppers','2 seasoning cubes','Salt to taste'],
+   steps:['Boil assorted meat and stockfish with onion, seasoning and salt until tender. Reserve stock.','Heat palm oil, fry blended scotch bonnet peppers briefly.','Add meat stock and bring to a boil. Whisk in cocoyam or achi paste gradually to thicken.','Add meat, stockfish and crayfish. Simmer 10 minutes.','Add washed bitterleaf, stir well and cook 10-15 minutes until the bitterness mellows.','Adjust seasoning and salt, then serve with pounded yam, fufu or garri.'],
+   notes:'Wash the bitterleaf thoroughly (traditionally squeezed with water several times) to reduce its natural bitterness before use.'},
+
+  {id:'d37',isDefault:true,name:'Kilishi',category:'Snack',time:'6 hours',serves:'6 people',diff:'Hard',
+   ingredients:['1kg lean beef (thinly sliced into sheets)','1 cup groundnut paste (defatted)','1 tsp ground ginger','1 tsp ground garlic','1 tsp chilli powder','1 tsp ground cloves','1 tsp black pepper','Salt to taste'],
+   steps:['Slice beef very thinly into wide, flat sheets and lay out on drying racks.','Sun-dry or dry in a low oven for a few hours until the meat is firm but pliable.','Mix groundnut paste with water to a thin spreadable consistency, then combine with all spices and salt.','Coat the partially dried meat sheets generously on both sides with the spiced groundnut paste.','Dry again in the sun or a low oven (around 60°C) for several hours until fully dehydrated.','Finish by briefly grilling over open flame or charcoal for a smoky char before serving or storing.'],
+   notes:'A Northern Nigerian dried meat delicacy similar to jerky. Patience is key - proper drying prevents spoilage and gives kilishi its long shelf life.'},
+
+  {id:'d38',isDefault:true,name:'Gbegiri Soup',category:'Dinner',time:'50 mins',serves:'4 people',diff:'Medium',
+   ingredients:['2 cups brown beans (peeled)','1/2 cup palm oil','1 onion','2 scotch bonnet peppers','2 tbsp ground crayfish','300g assorted meat (optional)','2 seasoning cubes','Salt to taste'],
+   steps:['Boil peeled brown beans until completely soft and mushy, about 40 minutes, adding water as needed.','Mash or blend the cooked beans into a smooth, thick puree, returning to the pot.','Heat palm oil separately, fry chopped onion and blended scotch bonnet pepper briefly.','Stir the pepper and oil mixture into the bean puree.','Add crayfish, cooked assorted meat, seasoning cubes and salt. Simmer 10 minutes, stirring often to avoid sticking.','Serve alongside ewedu soup and stew as part of the classic "abula" combination with amala.'],
+   notes:'Traditionally served together with ewedu (jute leaf soup) and stew over amala - a beloved Yoruba combination known as abula.'},
+
+  {id:'d39',isDefault:true,name:'Zobo Drink',category:'Drink',time:'30 mins',serves:'6 people',diff:'Easy',
+   ingredients:['2 cups dried zobo leaves (hibiscus/roselle)','2 litres water','1 cucumber (chopped)','1 pineapple (chopped, optional)','1 thumb ginger','2 cloves garlic (optional)','Sugar or honey to taste','Mint leaves to garnish'],
+   steps:['Rinse dried zobo leaves thoroughly to remove dust and grit.','Boil zobo leaves in water for 20-25 minutes until the liquid turns a deep red colour.','Strain the liquid through a sieve or muslin cloth, discarding the leaves.','Blend ginger and garlic with a little water, then stir into the strained zobo liquid.','Sweeten with sugar or honey to taste and refrigerate until cold.','Serve chilled over ice with chopped cucumber, pineapple and a sprig of mint.'],
+   notes:'Zobo is naturally caffeine-free and rich in vitamin C. Adjust ginger for extra warmth or add pineapple juice for natural sweetness.'},
+
+  {id:'d40',isDefault:true,name:'Puff Puff',category:'Snack',time:'40 mins',serves:'6 people',diff:'Easy',
+   ingredients:['3 cups flour','1/2 cup sugar','2 tsp instant yeast','1/2 tsp nutmeg','1/2 tsp salt','1.5 cups warm water','Vegetable oil for deep frying'],
+   steps:['Mix flour, sugar, yeast, nutmeg and salt in a large bowl.','Gradually add warm water, whisking until you get a smooth, stretchy batter with no lumps.','Cover the bowl and leave in a warm place to rise for about 45-60 minutes until doubled and bubbly.','Heat oil in a deep pot to medium heat.','Scoop small portions of batter with a wet hand or spoon and drop directly into the hot oil.','Fry, turning occasionally, until golden brown and cooked through, about 3-4 minutes. Drain and serve warm, optionally dusted with sugar.'],
+   notes:'A well-risen, bubbly batter is the secret to light, airy puff puff. Do not skip the resting time!'},
+
+  // MORE INTERCONTINENTAL DISHES
+  {id:'d41',isDefault:true,name:'Chicken Fried Rice',category:'Dinner',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['3 cups cooked rice (chilled)','300g chicken breast (diced)','2 eggs (beaten)','1 cup mixed vegetables (peas, carrots, corn)','3 tbsp soy sauce','1 tbsp sesame oil','2 spring onions (chopped)','2 garlic cloves (minced)','2 tbsp vegetable oil','Salt and pepper to taste'],
+   steps:['Heat oil in a wok, scramble the eggs lightly and set aside.','Stir-fry diced chicken until cooked through and lightly browned. Set aside with the eggs.','Add a little more oil, fry garlic briefly, then add mixed vegetables and stir-fry 3 minutes.','Add chilled rice, breaking up any clumps, and stir-fry on high heat for 3-4 minutes.','Return chicken and eggs to the wok, add soy sauce and sesame oil, toss everything together.','Garnish with spring onions and serve hot.'],
+   notes:'Using day-old chilled rice prevents the fried rice from becoming mushy - freshly cooked warm rice holds too much moisture.'},
+
+  {id:'d42',isDefault:true,name:'Beef Burgers',category:'Dinner',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['600g minced beef','1 small onion (grated)','1 egg','2 tbsp breadcrumbs','1 tsp garlic powder','4 burger buns','Lettuce, tomato and cheese slices','Ketchup and mustard to serve','Salt and pepper to taste'],
+   steps:['Combine minced beef, grated onion, egg, breadcrumbs, garlic powder, salt and pepper in a bowl.','Mix gently and shape into 4 equal patties, pressing a small dimple in the centre of each.','Heat a grill pan or skillet over medium-high heat.','Cook patties for 4-5 minutes per side until well browned and cooked through, adding a cheese slice near the end if desired.','Toast burger buns lightly on the pan.','Assemble burgers with lettuce, tomato, patty and desired condiments.'],
+   notes:'Pressing a dimple in the centre of each patty stops it from puffing up into a dome shape as it cooks.'},
+
+  {id:'d43',isDefault:true,name:'Margherita Pizza',category:'Dinner',time:'40 mins',serves:'2 people',diff:'Medium',
+   ingredients:['1 pizza dough ball (store-bought or homemade)','1/2 cup tomato passata','200g fresh mozzarella (torn)','Fresh basil leaves','2 tbsp olive oil','1 garlic clove (minced)','Salt to taste'],
+   steps:['Preheat oven to its highest setting (ideally 250°C) with a baking tray or pizza stone inside.','Roll out the dough on a floured surface into a thin round.','Mix passata with minced garlic, a pinch of salt and 1 tbsp olive oil, spread thinly over the dough.','Scatter torn mozzarella evenly over the top.','Carefully transfer to the hot tray and bake for 8-12 minutes until the crust is golden and cheese is bubbling.','Remove from oven, top with fresh basil leaves and a drizzle of olive oil before serving.'],
+   notes:'The hotter your oven, the better - a very hot oven mimics a pizza oven and gives a crisp, blistered crust.'},
+
+  {id:'d44',isDefault:true,name:'Beef Stir Fry with Vegetables',category:'Dinner',time:'25 mins',serves:'4 people',diff:'Easy',
+   ingredients:['400g beef sirloin (thinly sliced)','1 broccoli head (florets)','1 red bell pepper (sliced)','1 carrot (sliced)','3 tbsp soy sauce','1 tbsp oyster sauce','1 tsp cornstarch','2 garlic cloves (minced)','1 tbsp ginger (minced)','2 tbsp vegetable oil'],
+   steps:['Toss beef slices with 1 tbsp soy sauce and cornstarch, leave 10 minutes to marinate.','Heat oil in a wok over high heat, stir-fry beef in batches until browned. Set aside.','Add a little more oil, stir-fry garlic and ginger briefly until fragrant.','Add broccoli, bell pepper and carrot, stir-fry 3-4 minutes until just tender-crisp.','Return beef to the wok, add remaining soy sauce and oyster sauce, toss well.','Cook 1-2 more minutes and serve immediately over steamed rice.'],
+   notes:'Cook on high heat and keep ingredients moving for that classic "wok hei" (breath of the wok) flavour - do not overcrowd the pan.'},
+
+  {id:'d45',isDefault:true,name:'Shakshuka',category:'Breakfast',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['6 eggs','400g tinned tomatoes','1 red bell pepper (diced)','1 onion (diced)','3 garlic cloves (minced)','1 tsp cumin','1 tsp paprika','1/2 tsp chilli flakes','2 tbsp olive oil','Fresh parsley or coriander','Salt and pepper to taste'],
+   steps:['Heat olive oil in a wide pan, fry onion and bell pepper until softened, about 5 minutes.','Add garlic, cumin, paprika and chilli flakes, cook 1 minute until fragrant.','Add tinned tomatoes, season with salt and pepper, and simmer 10-12 minutes until thickened.','Make small wells in the sauce and crack an egg into each well.','Cover the pan and cook on low heat for 6-8 minutes until egg whites are set but yolks remain runny.','Garnish with fresh herbs and serve hot with crusty bread.'],
+   notes:'A North African and Middle Eastern favourite, perfect for brunch. Cover the pan while the eggs cook to set the whites evenly without overcooking the yolks.'},
+
+  {id:'d46',isDefault:true,name:'Butter Chicken',category:'Dinner',time:'55 mins',serves:'4 people',diff:'Medium',
+   ingredients:['600g chicken thighs (cubed)','200ml plain yoghurt','2 tsp garam masala','1 tsp turmeric','400g tomato passata','150ml heavy cream','50g butter','2 onions (chopped)','4 garlic cloves','1 tbsp ginger paste','1 tsp paprika','Salt to taste'],
+   steps:['Marinate chicken in yoghurt, half the garam masala, turmeric and salt for at least 30 minutes.','Cook marinated chicken in a hot pan until browned on all sides. Set aside.','Melt butter in the same pan, fry onions until golden, then add garlic and ginger paste.','Add remaining spices and paprika, fry 1 minute, then add tomato passata. Simmer 15 minutes.','Blend the sauce until smooth if desired, then return to the pan with the chicken.','Stir in cream, simmer 10 minutes until chicken is cooked through, and serve with naan or rice.'],
+   notes:'For extra richness, finish with a final knob of butter just before serving - this is where the dish gets its name.'},
+
+  {id:'d47',isDefault:true,name:'Caesar Salad',category:'Lunch',time:'20 mins',serves:'4 people',diff:'Easy',
+   ingredients:['2 romaine lettuce heads (chopped)','1 cup croutons','50g Parmesan (shaved)','2 chicken breasts (grilled, sliced, optional)','2 egg yolks','2 anchovy fillets','1 garlic clove','2 tbsp lemon juice','1 tsp Dijon mustard','1/2 cup olive oil','Salt and pepper to taste'],
+   steps:['Whisk egg yolks, minced garlic, mashed anchovies, lemon juice and mustard together.','Slowly drizzle in olive oil while whisking constantly to form an emulsified dressing.','Season the dressing with salt and pepper to taste.','Toss chopped romaine lettuce with the dressing until well coated.','Top with croutons, shaved Parmesan and sliced grilled chicken if using.','Serve immediately while the lettuce is crisp.'],
+   notes:'For a quicker version, whisk the dressing ingredients into good quality store-bought mayonnaise instead of raw egg yolks.'},
+
+  {id:'d48',isDefault:true,name:'Beef Chow Mein',category:'Dinner',time:'30 mins',serves:'4 people',diff:'Easy',
+   ingredients:['300g egg noodles','300g beef (thinly sliced)','2 cups mixed vegetables (cabbage, carrots, bean sprouts)','3 tbsp soy sauce','1 tbsp dark soy sauce','1 tbsp oyster sauce','1 tsp sesame oil','2 garlic cloves (minced)','3 tbsp vegetable oil'],
+   steps:['Cook egg noodles according to package instructions, drain and toss with a little oil to prevent sticking.','Heat oil in a wok, stir-fry beef slices on high heat until browned. Set aside.','Add a little more oil, fry garlic briefly, then add mixed vegetables and stir-fry 3 minutes.','Add cooked noodles to the wok along with soy sauces, oyster sauce and sesame oil.','Return beef to the wok and toss everything together on high heat for 2-3 minutes.','Serve immediately while hot.'],
+   notes:'Toss the noodles with a little oil after draining to keep the strands separate and prevent clumping before stir-frying.'},
+
+  {id:'d49',isDefault:true,name:'Vegetable Minestrone Soup',category:'Lunch',time:'40 mins',serves:'6 people',diff:'Easy',
+   ingredients:['2 carrots (diced)','2 celery stalks (diced)','1 onion (diced)','2 garlic cloves (minced)','400g tinned tomatoes','1 litre vegetable stock','1 cup small pasta shapes','400g tinned kidney beans (drained)','2 cups chopped kale or spinach','2 tbsp olive oil','Parmesan to serve','Salt and pepper to taste'],
+   steps:['Heat olive oil in a large pot, sauté onion, carrots and celery until softened, about 5 minutes.','Add garlic and cook 1 minute until fragrant.','Add tinned tomatoes and vegetable stock, bring to a boil.','Add pasta and kidney beans, simmer 10-12 minutes until pasta is tender.','Stir in chopped kale or spinach and cook 3 more minutes until wilted.','Season with salt and pepper, and serve topped with grated Parmesan.'],
+   notes:'A hearty, adaptable Italian soup - swap in whatever vegetables and beans you have on hand.'},
+
+  {id:'d50',isDefault:true,name:'Banana Bread',category:'Breakfast',time:'70 mins',serves:'8 people',diff:'Easy',
+   ingredients:['3 very ripe bananas (mashed)','1/3 cup melted butter','3/4 cup sugar','1 egg (beaten)','1 tsp vanilla extract','1 tsp baking soda','A pinch of salt','1.5 cups flour','1/2 cup chopped walnuts (optional)'],
+   steps:['Preheat oven to 175°C and grease a loaf pan.','Mash bananas well in a large bowl, then mix in melted butter.','Stir in sugar, beaten egg and vanilla extract.','Sprinkle baking soda and salt over the mixture and stir in.','Add flour and mix just until combined - do not overmix. Fold in walnuts if using.','Pour batter into the prepared pan and bake for 55-60 minutes until a skewer inserted comes out clean.'],
+   notes:'The riper and more spotted the bananas, the sweeter and more flavourful your banana bread will be.'}
+
+];
+
+function loadRecipes(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('fnm_user_recipes')||'[]');
+    return [...DEFAULT_RECIPES,...saved];
+  }catch{return DEFAULT_RECIPES;}
+}
+function loadUserRecipes(){try{return JSON.parse(localStorage.getItem('fnm_user_recipes')||'[]');}catch{return[];}}
+function saveRecipes(r){
+  const userOnly=r.filter(x=>!x.isDefault);
+  localStorage.setItem('fnm_user_recipes',JSON.stringify(userOnly));
+}
+
+// BUILD RECIPES
+function buildRecipes(){
+  const recipes=loadRecipes(),container=document.getElementById('recipesContainer');
+  container.innerHTML='';
+
+  // Section headers
+  const nigerian=recipes.filter(r=>r.isDefault&&(n=>(n<=10)||(n>=21&&n<=40))(parseInt(r.id.replace('d',''))));
+  const intercontinental=recipes.filter(r=>r.isDefault&&(n=>(n>=11&&n<=20)||(n>=41&&n<=50))(parseInt(r.id.replace('d',''))));
+  const userAdded=recipes.filter(r=>!r.isDefault);
+
+  function makeSection(title,icon,list,startIdx){
+    if(!list.length)return;
+    const sec=document.createElement('div');
+    sec.innerHTML=`<div class="recipe-section-header"><span>${icon}</span>${title}</div>`;
+    container.appendChild(sec);
+    list.forEach((r,i)=>{
+      const idx=startIdx+i;
+      const card=document.createElement('div');card.className='recipe-card';
+      const color=CAT_COLORS[r.category]||'#2D6A4F';
+      const actions=r.isDefault
+        ?`<button class="r-btn r-btn-edit" onclick="editRecipe(${idx})" style="opacity:.4;cursor:not-allowed" disabled>🔒 Built-in</button>`
+        :`<button class="r-btn r-btn-edit" onclick="editRecipe(${idx})">✏️ Edit</button>
+          <button class="r-btn r-btn-delete" onclick="deleteRecipe(${idx})">🗑 Delete</button>`;
+      card.innerHTML=`
+        <div class="recipe-header" style="background:${color}" onclick="this.closest('.recipe-card').classList.toggle('open')">
+          <span class="r-title">🍽 ${r.name}</span>
+          <span class="r-cat">${r.category}</span>
+          <span class="r-chev">▾</span>
+        </div>
+        <div class="recipe-body">
+          <div class="recipe-meta">
+            ${r.time?`<span>⏱ ${r.time}</span>`:''}
+            ${r.serves?`<span>👥 ${r.serves}</span>`:''}
+            ${r.diff?`<span>📊 ${r.diff}</span>`:''}
+          </div>
+          <div class="recipe-section-label">Ingredients</div>
+          <ul class="recipe-ingredients">${(r.ingredients||[]).map(i=>`<li>${i}</li>`).join('')}</ul>
+          <div class="recipe-section-label">Steps</div>
+          <ol class="recipe-steps">${(r.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol>
+          ${r.notes?`<div class="recipe-notes">💬 ${r.notes}</div>`:''}
+          <div class="recipe-actions">${actions}</div>
+        </div>`;
+      container.appendChild(card);
+    });
+  }
+
+  makeSection('Nigerian Dishes','🇳🇬',nigerian,0);
+  makeSection('Intercontinental Dishes','🌍',intercontinental,10);
+  if(userAdded.length) makeSection('My Recipes','👤',userAdded,50);
+
+  if(!recipes.length){
+    container.innerHTML=`<div class="empty-recipes"><span class="big-icon">👨‍🍳</span>No recipes yet!<br>Tap <strong>"Add New Recipe"</strong> to get started.</div>`;
+  }
+}
+
+// RECIPE FORM
+function openRecipeForm(recipe,idx){
+  editingRecipeId=idx!==undefined?idx:null;
+  document.getElementById('recipeFormTitle').textContent=editingRecipeId!==null?'✏️ Edit Recipe':'➕ Add New Recipe';
+  document.getElementById('rf-name').value=recipe?.name||'';
+  document.getElementById('rf-cat').value=recipe?.category||'Breakfast';
+  document.getElementById('rf-time').value=recipe?.time||'';
+  document.getElementById('rf-serves').value=recipe?.serves||'';
+  document.getElementById('rf-diff').value=recipe?.diff||'Easy';
+  document.getElementById('rf-ingredients').value=(recipe?.ingredients||[]).join('\n');
+  document.getElementById('rf-steps').value=(recipe?.steps||[]).join('\n');
+  document.getElementById('rf-notes').value=recipe?.notes||'';
+  document.getElementById('recipeOverlay').classList.add('open');
+}
+function closeRecipeForm(){document.getElementById('recipeOverlay').classList.remove('open');}
+function closeRecipeOverlay(e){if(e.target===document.getElementById('recipeOverlay'))closeRecipeForm();}
+function editRecipe(idx){
+  const recipes=loadRecipes();
+  if(recipes[idx]&&recipes[idx].isDefault){showToast('🔒 Built-in recipes cannot be edited.');return;}
+  openRecipeForm(recipes[idx],idx);
+}
+function deleteRecipe(idx){
+  const recipes=loadRecipes();
+  if(recipes[idx]&&recipes[idx].isDefault){showToast('⚠️ Built-in recipes cannot be deleted.');return;}
+  if(!confirm('Delete this recipe?'))return;
+  recipes.splice(idx,1);saveRecipes(recipes);buildRecipes();showToast('🗑 Recipe deleted.');
+}
+function saveRecipe(){
+  const name=document.getElementById('rf-name').value.trim();
+  if(!name){showToast('⚠️ Please enter a recipe name.');return;}
+  const ingredients=document.getElementById('rf-ingredients').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const steps=document.getElementById('rf-steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!ingredients.length){showToast('⚠️ Add at least one ingredient.');return;}
+  if(!steps.length){showToast('⚠️ Add at least one step.');return;}
+  const recipe={name,category:document.getElementById('rf-cat').value,time:document.getElementById('rf-time').value.trim(),serves:document.getElementById('rf-serves').value.trim(),diff:document.getElementById('rf-diff').value,ingredients,steps,notes:document.getElementById('rf-notes').value.trim()};
+  const recipes=loadRecipes();
+  if(editingRecipeId!==null)recipes[editingRecipeId]=recipe;else recipes.push(recipe);
+  saveRecipes(recipes);closeRecipeForm();buildRecipes();
+  showToast(editingRecipeId!==null?'✅ Recipe updated!':'✅ Recipe saved!');
+}
+
+// TOAST
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// WEEK NAV
+document.getElementById('prevWeek').addEventListener('click',()=>{weekOffset--;updateWeekDisplay();buildDays();});
+document.getElementById('nextWeek').addEventListener('click',()=>{weekOffset++;updateWeekDisplay();buildDays();});
+document.addEventListener('input',e=>{if(e.target.classList.contains('meal-input'))saveAll();});
+
+// INIT
+updateWeekDisplay();buildDays();
+</script>
+</body>
+</html>
